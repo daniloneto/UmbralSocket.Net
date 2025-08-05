@@ -7,6 +7,11 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+# Permissions needed for GitHub Packages
+permissions:
+  contents: read
+  packages: write
+
 env:
   DOTNET_VERSION: '9.0.x'
   PROJECT_PATH: 'src/UmbralSocket.Net/UmbralSocket.Net.csproj'
@@ -94,7 +99,7 @@ jobs:
       run: |
         for package in ./artifacts/*.nupkg; do
           echo "Publishing $package"
-          dotnet nuget push "$package" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+          dotnet nuget push "$package" --api-key ${{ secrets.UMBRALSOCKET }} --source https://api.nuget.org/v3/index.json --skip-duplicate
         done
 
   publish-github:
