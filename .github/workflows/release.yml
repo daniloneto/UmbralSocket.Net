@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  PROJECT_PATH: 'src/UmbralSocket.Net/UmbralSocket.Net.csproj'
+
+jobs:
+  publish:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Extract version from tag
+      id: version
+      run: |
+        TAG_NAME=${GITHUB_REF#refs/tags/v}
+        echo "VERSION=$TAG_NAME" >> $GITHUB_OUTPUT
+        
+    - name: Update project version
+      run: |
+        sed -i "s/<Version>.*<\/Version>/<Version>${{ steps.version.outputs.VERSION }}<\/Version>/" ${{ env.PROJECT_PATH }}
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+      
+    - name: Test
+      run: dotnet test --no-build --configuration Release
+      
+    - name: Pack
+      run: dotnet pack ${{ env.PROJECT_PATH }} --no-build --configuration Release --output ./artifacts
+      
+    - name: Publish to NuGet
+      run: |
+        for package in ./artifacts/*.nupkg; do
+          echo "Publishing $package"
+          dotnet nuget push "$package" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        done
+      
+    - name: Upload Release Assets
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ./artifacts/*.nupkg
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

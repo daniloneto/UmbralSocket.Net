@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>UmbralSocket.Net</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Danilo Neto</Authors>
+    <Company>UmbralSocket.Net</Company>
+    <Product>UmbralSocket.Net</Product>
+    <Description>Uma biblioteca binária de comunicação ultraleve e de altíssimo desempenho via Unix Sockets ou Named Pipes para backends .NET 9 AOT. Inspirada em umbral-socket do Rust.</Description>
+    <PackageTags>socket;unix;namedpipe;ipc;performance;aot;netcore;communication;binary</PackageTags>
+    <RepositoryUrl>https://github.com/daniloneto/UmbralSocket.Net</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/daniloneto/UmbralSocket.Net</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageReleaseNotes>Initial release of UmbralSocket.Net - High-performance Unix socket and Named Pipe communication library for .NET 9 AOT.</PackageReleaseNotes>
+    <Copyright>Copyright (c) 2025 UmbralSocket.Net Contributors</Copyright>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="/"/>
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="/"/>
+  </ItemGroup>
+</Project>
