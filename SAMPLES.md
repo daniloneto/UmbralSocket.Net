@@ -22,6 +22,7 @@ cd samples/UmbralSocket.Net.Sample
 dotnet run
 ```
 
+
 ### Opção 2: Comando direto
 ```bash
 cd samples/UmbralSocket.Net.Sample
@@ -31,7 +32,13 @@ dotnet run unix        # Unix Socket (Linux/macOS/Windows 10+)
 dotnet run namedpipe   # Named Pipe (Windows)
 dotnet run benchmark   # Teste de performance
 dotnet run json        # Serialização JSON com AOT
+dotnet run server      # Ping-pong: sobe apenas o servidor
+dotnet run client      # Ping-pong: sobe apenas o cliente
 ```
+| **Ping-Pong** | Demonstra uso real em Docker Compose |
+### ✅ Ping-pong client/server
+- Demonstra comunicação bidirecional e concatenação dinâmica de mensagens
+- Pronto para uso em Docker Compose (veja README principal)
 
 ### Opção 3: Usando VS Code Tasks
 Se estiver usando VS Code:

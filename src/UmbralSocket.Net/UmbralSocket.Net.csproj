@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <PackageId>UmbralSocket.Net</PackageId>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Authors>Danilo Neto</Authors>
     <Company>UmbralSocket.Net</Company>
     <Product>UmbralSocket.Net</Product>
@@ -15,7 +15,7 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <PackageReleaseNotes>v1.1.0: Adicionado SequenceExtensions.ToArray, exemplos atualizados, documentação aprimorada e melhorias de compatibilidade AOT. Veja CHANGELOG.md para detalhes.</PackageReleaseNotes>
+    <PackageReleaseNotes>v1.2.0: Exemplo ping-pong client/server para Docker Compose, build multi-stage com NativeAOT, suporte total a .NET 9, melhorias de compatibilidade Linux, documentação e exemplos revisados. Veja CHANGELOG.md para detalhes.</PackageReleaseNotes>
     <Copyright>Copyright (c) 2025 UmbralSocket.Net Contributors</Copyright>
   </PropertyGroup>
   <ItemGroup>

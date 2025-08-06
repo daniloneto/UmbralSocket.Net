@@ -1,6 +1,15 @@
 # Changelog
 
-Todas as mudanças notáveis deste projeto serão documentadas aqui.
+# [1.2.0] - 2025-08-06
+### Added
+- Exemplo ping-pong client/server para Docker Compose, demonstrando comunicação bidirecional e concatenação dinâmica de mensagens.
+- Dockerfile multi-stage: build e publish NativeAOT dentro do container, com instalação automática do clang.
+- docker-compose.yml para testes automatizados de client/server em containers separados.
+- Suporte total a .NET 9 NativeAOT no build Docker.
+
+### Changed
+- Documentação dos exemplos revisada para destacar o uso em ambientes Docker/Linux.
+- Exemplo de ping-pong agora mostra concatenação alternada de "-ping" e "-pong".
 
 ## [1.1.0] - 2025-08-06
 ### Added
