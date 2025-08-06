@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <PackageId>UmbralSocket.Net</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Authors>Danilo Neto</Authors>
     <Company>UmbralSocket.Net</Company>
     <Product>UmbralSocket.Net</Product>
@@ -15,11 +15,12 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <PackageReleaseNotes>Initial release of UmbralSocket.Net - High-performance Unix socket and Named Pipe communication library for .NET 9 AOT.</PackageReleaseNotes>
+    <PackageReleaseNotes>v1.1.0: Adicionado SequenceExtensions.ToArray, exemplos atualizados, documentação aprimorada e melhorias de compatibilidade AOT. Veja CHANGELOG.md para detalhes.</PackageReleaseNotes>
     <Copyright>Copyright (c) 2025 UmbralSocket.Net Contributors</Copyright>
   </PropertyGroup>
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="/"/>
     <None Include="..\..\LICENSE" Pack="true" PackagePath="/"/>
+    <None Include="..\..\CHANGELOG.md" Pack="true" PackagePath="/"/>
   </ItemGroup>
 </Project>
