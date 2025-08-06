@@ -5,14 +5,16 @@ Uma biblioteca binária de comunicação ultraleve e de altíssimo desempenho vi
 ## Exemplo rápido
 
 ```csharp
+using System.Buffers;
 using System.Text;
 using UmbralSocket.Net.Unix;
 
 var server = new UnixUmbralSocketServer();
-server.RegisterHandler(0x01, async payload =>
+server.RegisterHandler(0x01, payload =>
 {
-    var text = Encoding.UTF8.GetString(payload.ToArray());
-    return Encoding.UTF8.GetBytes($"SAVE:{text}");
+    // Converter ReadOnlySequence<byte> para string
+    var text = Encoding.UTF8.GetString(UmbralSocket.Net.SequenceExtensions.ToArray(payload));
+    return ValueTask.FromResult(Encoding.UTF8.GetBytes($"SAVE:{text}"));
 });
 
 var cts = new CancellationTokenSource();
@@ -23,6 +25,33 @@ var response = await client.SendAsync(0x01, Encoding.UTF8.GetBytes("hello"));
 Console.WriteLine(Encoding.UTF8.GetString(response)); // SAVE:hello
 cts.Cancel();
 ```
+
+## 🚀 Exemplos completos
+
+Confira os **projetos de exemplo completos** em [`samples/`](samples/) que demonstram:
+
+- ✅ **Unix Sockets** e **Named Pipes**
+- ✅ **Múltiplos handlers** por opcode  
+- ✅ **Serialização JSON** com AOT
+- ✅ **Benchmarks de performance**
+- ✅ **Diferentes cenários de uso**
+- ✅ **Cross-platform compatibility**
+
+### 🎮 Executar os exemplos
+
+```bash
+cd samples/UmbralSocket.Net.Sample
+
+# Modo interativo (menu)
+dotnet run
+
+# Demos específicos
+dotnet run namedpipe   # Named Pipe demo (Windows)
+dotnet run benchmark   # Performance benchmark  
+dotnet run json        # JSON serialization demo
+```
+
+📋 **Ver detalhes completos:** [SAMPLES.md](SAMPLES.md)
 
 ## Licença
 
