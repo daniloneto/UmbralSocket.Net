@@ -1,4 +1,6 @@
 # UmbralSocket.Net
+[![CI](https://github.com/daniloneto/UmbralSocket.Net/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/daniloneto/UmbralSocket.Net/actions)
+[![NuGet](https://img.shields.io/nuget/v/UmbralSocket.Net.svg)](https://www.nuget.org/packages/UmbralSocket.Net)
 
 Uma biblioteca binária de comunicação ultraleve e de altíssimo desempenho via Unix Sockets ou Named Pipes para backends .NET 9 AOT. Inspirada em [umbral-socket](https://github.com/alan-venv/umbral-socket) do Rust.
 
