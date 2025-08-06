@@ -57,28 +57,75 @@ public static class Program
         if (args.Length == 0)
         {
             await RunInteractiveDemo();
+            return;
         }
-        else
+
+        switch (args[0].ToLower())
         {
-            switch (args[0].ToLower())
-            {
-                case "unix":
-                    await RunUnixSocketDemo();
-                    break;
-                case "namedpipe":
-                    await RunNamedPipeDemo();
-                    break;
-                case "benchmark":
-                    await RunBenchmark();
-                    break;
-                case "json":
-                    await RunJsonDemo();
-                    break;
-                default:
-                    ShowUsage();
-                    break;
-            }
+            case "unix":
+                await RunUnixSocketDemo();
+                break;
+            case "namedpipe":
+                await RunNamedPipeDemo();
+                break;
+            case "benchmark":
+                await RunBenchmark();
+                break;
+            case "json":
+                await RunJsonDemo();
+                break;
+            case "server":
+                await RunPingPongServer();
+                break;
+            case "client":
+                await RunPingPongClient();
+                break;
+            default:
+                ShowUsage();
+                break;
         }
+    }
+
+    // PingPong Server: responde com o texto recebido acrescido de "+pong"
+    private static async Task RunPingPongServer()
+    {
+        Console.WriteLine("=== PingPong Unix Socket Server ===");
+        if (OperatingSystem.IsWindows())
+        {
+            Console.WriteLine("Unix Sockets requerem Linux/macOS ou Windows 10 build 17063+");
+            return;
+        }
+        var server = new UnixUmbralSocketServer("/tmp/umbral_sample.sock");
+        server.RegisterHandler(0x42, payload =>
+        {
+            var text = Encoding.UTF8.GetString(UmbralSocket.Net.SequenceExtensions.ToArray(payload));
+            var response = text + "-pong";
+            Console.WriteLine($"[SERVER] {response}");
+            return ValueTask.FromResult(Encoding.UTF8.GetBytes(response));
+        });
+        Console.WriteLine("Servidor PingPong iniciado. Aguardando conexões...");
+        await server.StartAsync(CancellationToken.None);
+    }
+
+    // PingPong Client: envia "ping", recebe resposta, acrescenta e repete 10 vezes
+    private static async Task RunPingPongClient()
+    {
+        Console.WriteLine("=== PingPong Unix Socket Client ===");
+        if (OperatingSystem.IsWindows())
+        {
+            Console.WriteLine("Unix Sockets requerem Linux/macOS ou Windows 10 build 17063+");
+            return;
+        }
+        var client = new UnixUmbralSocketClient("/tmp/umbral_sample.sock");
+        string msg = "ping";
+        for (int i = 1; i <= 10; i++)
+        {
+            var response = await client.SendAsync(0x42, Encoding.UTF8.GetBytes(msg));
+            var respStr = Encoding.UTF8.GetString(response);
+            Console.WriteLine($"[CLIENT] {i}: {msg}");
+            msg = respStr + "-ping";
+        }
+        Console.WriteLine("\nPingPong finalizado!");
     }
 
     private static async Task RunInteractiveDemo()

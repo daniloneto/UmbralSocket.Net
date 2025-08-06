@@ -1,0 +1,30 @@
+version: "3.9"
+services:
+  umbral-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["server"]
+    volumes:
+      - umbral-socket:/tmp
+    networks:
+      - umbralnet
+
+  umbral-client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["client"]
+    depends_on:
+      - umbral-server
+    volumes:
+      - umbral-socket:/tmp
+    networks:
+      - umbralnet
+
+volumes:
+  umbral-socket:
+
+networks:
+  umbralnet:
+    driver: bridge

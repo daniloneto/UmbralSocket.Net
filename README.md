@@ -45,39 +45,46 @@ cd samples/UmbralSocket.Net.Sample
 # Modo interativo (menu)
 dotnet run
 
+
 # Demos específicos
+dotnet run unix        # Unix Socket demo (Linux/macOS/Windows 10+)
 dotnet run namedpipe   # Named Pipe demo (Windows)
 dotnet run benchmark   # Performance benchmark  
 dotnet run json        # JSON serialization demo
+dotnet run server      # Ping-pong: sobe apenas o servidor
+dotnet run client      # Ping-pong: sobe apenas o cliente
 ```
+## 🏓 Exemplo ping-pong (client/server)
+
+O exemplo ping-pong demonstra comunicação bidirecional real entre dois processos (ou containers):
+
+### 🐳 Rodando o exemplo ping-pong com Docker Compose (WSL/Linux)
+
+Você pode testar o ping-pong client/server facilmente usando Docker Compose no WSL ou Linux:
+
+```bash
+# Na raiz do projeto
+docker compose up --build
+```
+
+Isso irá:
+- Fazer o build automático do projeto (NativeAOT) dentro do container
+- Subir dois serviços: um como server e outro como client
+- Exibir no terminal o ping-pong acontecendo entre os dois containers
+
+Para reiniciar do zero (limpar imagens/volumes):
+```bash
+docker compose down -v
+docker system prune -af --volumes
+```
+
+> O exemplo está pronto para ambientes Linux/WSL2, sem necessidade de dependências locais além do Docker.
 
 📋 **Ver detalhes completos:** [SAMPLES.md](SAMPLES.md)
 
 ## Licença
 
 Este projeto está licenciado sob a [Licença MIT](LICENSE).
-
-## CI/CD e Publicação
-
-Este projeto usa GitHub Actions para automação de CI/CD com as seguintes funcionalidades:
-
-- **Build e Teste Automático**: Executado em todos os PRs e pushes
-- **Publicação no NuGet**: Automática quando uma tag de versão é criada
-- **Publicação no GitHub Packages**: Backup da publicação
-
-### Configuração de Secrets
-
-Para que a publicação funcione, configure os seguintes secrets no GitHub:
-
-1. `NUGET_API_KEY`: Sua chave de API do NuGet.org
-2. `GITHUB_TOKEN`: Automaticamente fornecido pelo GitHub
-
-### Como fazer um release
-
-1. Atualize a versão no arquivo `.csproj`
-2. Crie uma tag: `git tag v1.0.0`
-3. Faça push da tag: `git push origin v1.0.0`
-4. O GitHub Actions automaticamente publicará no NuGet
 
 ## Atribuição
 
