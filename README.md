@@ -1,4 +1,4 @@
-# UmbralSocket.Net
+# <img src="https://raw.githubusercontent.com/daniloneto/UmbralSocket.Net/refs/heads/main/logo.png" />
 [![CI](https://github.com/daniloneto/UmbralSocket.Net/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/daniloneto/UmbralSocket.Net/actions)
 [![NuGet](https://img.shields.io/nuget/v/UmbralSocket.Net.svg)](https://www.nuget.org/packages/UmbralSocket.Net)
 
