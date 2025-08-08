@@ -1,29 +1,143 @@
 version: "3.9"
+
 services:
+  # Combined server and client in one container for Unix Domain Socket demo
+  umbral-demo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["sample"]
+    volumes:
+      - umbral-socket:/data/sockets:rw
+      - secure-socket:/data/secure:rw
+    networks:
+      - umbralnet    
+    profiles:
+      - demo
+    stdin_open: true
+    tty: true
+    environment:
+      - UMBRAL_SOCKET_PATH=/data/sockets/umbral_sample.sock
+
+  # Server only mode for external client connections
   umbral-server:
     build:
       context: .
       dockerfile: Dockerfile
     command: ["server"]
     volumes:
-      - umbral-socket:/tmp
+      - umbral-socket:/data/sockets:rw
+      - secure-socket:/data/secure:rw
+      - shared-socket:/tmp/shared:rw
     networks:
-      - umbralnet
-
+      - umbralnet    
+    environment:
+      - SAMPLE_MODE=server
+      - UMBRAL_SOCKET_PATH=/tmp/shared/umbral_sample.sock    
+    healthcheck:
+      test: ["CMD", "test", "-S", "/tmp/shared/umbral_sample.sock"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+  # Client that connects to server via shared Unix Domain Socket
   umbral-client:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["client"]
+    command: ["diagnostic"]
     depends_on:
-      - umbral-server
+      umbral-server:
+        condition: service_healthy
     volumes:
-      - umbral-socket:/tmp
+      - umbral-socket:/data/sockets:rw
+      - secure-socket:/data/secure:rw
+      - shared-socket:/tmp/shared:rw
+    networks:
+      - umbralnet    
+    environment:
+      - SAMPLE_MODE=client
+      - UMBRAL_SOCKET_PATH=/tmp/shared/umbral_sample.sock
+
+  # PingPong Zero-Copy Demo (self-contained)
+  pingpong-demo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["pingpong"]
+    volumes:
+      - umbral-socket:/data/sockets:rw
+      - secure-socket:/data/secure:rw
     networks:
       - umbralnet
+    profiles:
+      - demo
+    environment:
+      - UMBRAL_SOCKET_PATH=/data/sockets/umbral_sample.sock
+
+  # Secure Server Demo (Unix Domain Sockets on Linux)
+  secure-demo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["secure"]
+    volumes:
+      - umbral-socket:/data/sockets:rw
+      - secure-socket:/data/secure:rw
+    networks:
+      - umbralnet
+    profiles:
+      - demo
+    environment:
+      - DEMO_MODE=secure
+      - SECURE_SOCKET_PATH=/data/secure
+    # Run with elevated permissions for socket management
+    privileged: false
+    cap_add:
+      - DAC_OVERRIDE
+
+  # Interactive sample runner
+  sample-interactive:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["sample"]
+    volumes:
+      - umbral-socket:/data/sockets:rw
+      - secure-socket:/data/secure:rw
+    networks:
+      - umbralnet    
+    profiles:
+      - interactive
+    stdin_open: true
+    tty: true
+    environment:
+      - UMBRAL_SOCKET_PATH=/data/sockets/umbral_sample.sock
+
+  # All demos runner (for testing all samples sequentially)
+  all-demos:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["help"]
+    volumes:
+      - umbral-socket:/data/sockets:rw
+      - secure-socket:/data/secure:rw
+    networks:
+      - umbralnet    
+    profiles:
+      - test
+    environment:
+      - UMBRAL_SOCKET_PATH=/data/sockets/umbral_sample.sock
+      - SECURE_SOCKET_PATH=/data/secure
 
 volumes:
   umbral-socket:
+    driver: local
+  secure-socket:
+    driver: local
+  shared-socket:
+    driver: local
 
 networks:
   umbralnet:

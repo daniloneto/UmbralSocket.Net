@@ -44,8 +44,9 @@ internal record CalculatorRequest(double A, double B, string Operation);
 /// Sample application demonstrating UmbralSocket.Net usage
 /// </summary>
 public static class Program
-{
-    /// <summary>
+{    /// <summary>
+    /// Main entry point
+    /// </summary>    /// <summary>
     /// Main entry point
     /// </summary>
     /// <param name="args">Command line arguments</param>
@@ -76,17 +77,24 @@ public static class Program
                 break;
             case "server":
                 await RunPingPongServer();
-                break;
-            case "client":
+                break;            case "client":
                 await RunPingPongClient();
                 break;
             default:
                 ShowUsage();
                 break;
         }
-    }
-
-    // PingPong Server: responde com o texto recebido acrescido de "+pong"
+    }    /// <summary>
+    /// Gets the socket path from environment variable or uses default
+    /// </summary>
+    /// <returns>Socket path to use</returns>
+    private static string GetSocketPath()
+    {
+        var envPath = Environment.GetEnvironmentVariable("UMBRAL_SOCKET_PATH");
+        var defaultPath = "/tmp/umbral_sample.sock";
+        
+        return envPath ?? defaultPath;
+    }// PingPong Server: responde com o texto recebido acrescido de "+pong"
     private static async Task RunPingPongServer()
     {
         Console.WriteLine("=== PingPong Unix Socket Server ===");
@@ -95,19 +103,93 @@ public static class Program
             Console.WriteLine("Unix Sockets requerem Linux/macOS ou Windows 10 build 17063+");
             return;
         }
-        var server = new UnixUmbralSocketServer("/tmp/umbral_sample.sock");
+        
+        var socketPath = GetSocketPath();
+        Console.WriteLine($"Criando servidor no socket: {socketPath}");
+          // Verificar e criar diretório se necessário
+        var socketDir = Path.GetDirectoryName(socketPath);
+        if (!string.IsNullOrEmpty(socketDir) && !Directory.Exists(socketDir))
+        {
+            Console.WriteLine($"Criando diretório: {socketDir}");
+            Directory.CreateDirectory(socketDir);
+        }
+        
+        // Remover socket existente se houver
+        if (File.Exists(socketPath))
+        {
+            Console.WriteLine($"Removendo socket existente: {socketPath}");
+            File.Delete(socketPath);
+        }
+          var server = new UnixUmbralSocketServer(socketPath);
         server.RegisterHandler(0x42, payload =>
         {
-            var text = Encoding.UTF8.GetString(UmbralSocket.Net.SequenceExtensions.ToArray(payload));
+            var text = Encoding.UTF8.GetString(SequenceExtensions.ToArray(payload));
             var response = text + "-pong";
-            Console.WriteLine($"[SERVER] {response}");
+            Console.WriteLine($"[SERVER] Recebido: '{text}' -> Resposta: '{response}'");
+            Console.WriteLine($"[SERVER] Payload size: {payload.Length} bytes");
             return ValueTask.FromResult(Encoding.UTF8.GetBytes(response));
         });
+          Console.WriteLine("Iniciando servidor...");
+        var serverTask = server.StartAsync(CancellationToken.None);
+        
+        // Aguardar um pouco para o socket ser criado
+        await Task.Delay(1000);
+        
+        // Forçar permissões do socket (Linux/Unix)
+        if (!OperatingSystem.IsWindows() && File.Exists(socketPath))
+        {
+            try
+            {
+                // Definir permissões 0777 (rwxrwxrwx) para o socket
+                var process = new System.Diagnostics.Process
+                {
+                    StartInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = "chmod",
+                        Arguments = $"777 \"{socketPath}\"",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true
+                    }
+                };
+                
+                process.Start();
+                await process.WaitForExitAsync();
+                
+                if (process.ExitCode == 0)
+                {
+                    Console.WriteLine($"✅ Permissões definidas para o socket: {socketPath}");
+                }
+                else
+                {
+                    var error = await process.StandardError.ReadToEndAsync();
+                    Console.WriteLine($"⚠️ Falha ao definir permissões: {error}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Erro ao definir permissões: {ex.Message}");
+            }
+        }
+          // Verificar se o socket foi criado
+        if (File.Exists(socketPath))
+        {
+            Console.WriteLine($"✅ Socket criado com sucesso: {socketPath}");
+        }
+        else
+        {
+            Console.WriteLine($"❌ Falha ao criar socket: {socketPath}");
+        }
+          // Listar conteúdo do diretório
+        if (!string.IsNullOrEmpty(socketDir) && Directory.Exists(socketDir))
+        {
+            var files = Directory.GetFileSystemEntries(socketDir);
+            Console.WriteLine($"[SERVER] Arquivos em {socketDir}: [{string.Join(", ", files)}]");
+        }
+        
         Console.WriteLine("Servidor PingPong iniciado. Aguardando conexões...");
-        await server.StartAsync(CancellationToken.None);
-    }
-
-    // PingPong Client: envia "ping", recebe resposta, acrescenta e repete 10 vezes
+        await serverTask;
+    }    // PingPong Client: envia "ping", recebe resposta, acrescenta e repete 10 vezes
     private static async Task RunPingPongClient()
     {
         Console.WriteLine("=== PingPong Unix Socket Client ===");
@@ -116,14 +198,96 @@ public static class Program
             Console.WriteLine("Unix Sockets requerem Linux/macOS ou Windows 10 build 17063+");
             return;
         }
-        var client = new UnixUmbralSocketClient("/tmp/umbral_sample.sock");
+        
+        var socketPath = GetSocketPath();
+        Console.WriteLine($"Conectando ao socket: {socketPath}");        // Aguardar servidor estar pronto e verificar socket várias vezes
+        for (int attempt = 1; attempt <= 10; attempt++)
+        {
+            Console.WriteLine($"Tentativa {attempt}/10: Verificando socket...");
+            var socketDir = Path.GetDirectoryName(socketPath);
+            if (!string.IsNullOrEmpty(socketDir) && Directory.Exists(socketDir))
+            {
+                var files = Directory.GetFileSystemEntries(socketDir);
+                Console.WriteLine($"Arquivos em {socketDir}: [{string.Join(", ", files)}]");
+                
+                // Se socket existe, verificar permissões
+                if (files.Contains(socketPath))
+                {
+                    Console.WriteLine($"✅ Socket encontrado: {socketPath}");
+                    
+                    // Verificar permissões do socket (Linux/Unix)
+                    if (!OperatingSystem.IsWindows())
+                    {
+                        try
+                        {
+                            var process = new System.Diagnostics.Process
+                            {
+                                StartInfo = new System.Diagnostics.ProcessStartInfo
+                                {
+                                    FileName = "ls",
+                                    Arguments = $"-la \"{socketPath}\"",
+                                    UseShellExecute = false,
+                                    RedirectStandardOutput = true
+                                }
+                            };
+                            
+                            process.Start();
+                            var output = await process.StandardOutput.ReadToEndAsync();
+                            await process.WaitForExitAsync();
+                            
+                            Console.WriteLine($"Permissões do socket: {output.Trim()}");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"⚠️ Erro ao verificar permissões: {ex.Message}");
+                        }
+                    }
+                    break;
+                }
+                
+                // Verificar se o socket existe (Unix sockets são detectáveis de outras formas)
+                if (File.Exists(socketPath))
+                {
+                    Console.WriteLine($"✅ Socket encontrado: {socketPath}");
+                    break;
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Diretório não existe: {socketDir}");
+            }
+            
+            if (attempt == 10)
+            {
+                Console.WriteLine($"❌ Socket não encontrado após 10 tentativas: {socketPath}");
+                return;
+            }
+              await Task.Delay(1000);
+        }
+        
+        // Manter conexão aberta para todas as iterações (mais eficiente)
+        await using var client = new UnixUmbralSocketClient(socketPath);
+        
         string msg = "ping";
         for (int i = 1; i <= 10; i++)
         {
-            var response = await client.SendAsync(0x42, Encoding.UTF8.GetBytes(msg));
-            var respStr = Encoding.UTF8.GetString(response);
-            Console.WriteLine($"[CLIENT] {i}: {msg}");
-            msg = respStr + "-ping";
+            try
+            {
+                Console.WriteLine($"[CLIENT] Enviando iteração {i}: '{msg}'");                var response = await client.SendAsync(0x42, Encoding.UTF8.GetBytes(msg));
+                var respStr = Encoding.UTF8.GetString(response);
+                Console.WriteLine($"[CLIENT] {i}: {msg} -> {respStr}");
+                msg = respStr + "-ping";
+                
+                await Task.Delay(500);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CLIENT] Erro na iteração {i}: {ex.Message}");
+                Console.WriteLine($"[CLIENT] Stack trace: {ex.StackTrace}");
+                
+                // Tentar continuar com as próximas iterações para investigar se é um problema pontual
+                await Task.Delay(1000);
+            }
         }
         Console.WriteLine("\nPingPong finalizado!");
     }
@@ -195,9 +359,8 @@ public static class Program
         var serverTask = server.StartAsync(cts.Token);
 
         Console.WriteLine("Servidor Unix Socket iniciado...");
-        await Task.Delay(1000); // Aguardar servidor inicializar
-
-        var client = new UnixUmbralSocketClient("/tmp/umbral_sample.sock");
+        await Task.Delay(1000); // Aguardar servidor inicializar        // Reutilizar conexão para melhor performance
+        await using var client = new UnixUmbralSocketClient("/tmp/umbral_sample.sock");
 
         // Teste 1: Echo
         Console.WriteLine("\n--- Teste 1: Echo ---");
@@ -254,9 +417,8 @@ public static class Program
         var serverTask = server.StartAsync(cts.Token);
 
         Console.WriteLine("Servidor Named Pipe iniciado...");
-        await Task.Delay(1000);
-
-        var client = new NamedPipeUmbralSocketClient("UmbralSample");
+        await Task.Delay(1000);        // Reutilizar conexão para melhor performance
+        await using var client = new NamedPipeUmbralSocketClient("UmbralSample");
 
         // Testes de calculadora
         var operations = new[]
@@ -302,9 +464,8 @@ public static class Program
 
         var cts = new CancellationTokenSource();
         var serverTask = server.StartAsync(cts.Token);
-        await Task.Delay(1000);
-
-        var client = new UnixUmbralSocketClient("/tmp/umbral_benchmark.sock");
+        await Task.Delay(1000);        // Reutilizar conexão para melhor performance no benchmark
+        await using var client = new UnixUmbralSocketClient("/tmp/umbral_benchmark.sock");
         var payload = new byte[1024]; // 1KB payload
         Random.Shared.NextBytes(payload);
 
@@ -340,9 +501,8 @@ public static class Program
 
         var cts = new CancellationTokenSource();
         var serverTask = server.StartAsync(cts.Token);
-        await Task.Delay(1000);
-
-        var client = new NamedPipeUmbralSocketClient("UmbralBenchmark");
+        await Task.Delay(1000);        // Reutilizar conexão para melhor performance no benchmark
+        await using var client = new NamedPipeUmbralSocketClient("UmbralBenchmark");
         var payload = new byte[1024]; // 1KB payload
         Random.Shared.NextBytes(payload);
 
@@ -397,9 +557,8 @@ public static class Program
 
         var cts = new CancellationTokenSource();
         var serverTask = server.StartAsync(cts.Token);
-        await Task.Delay(1000);
-
-        var client = new UnixUmbralSocketClient("/tmp/umbral_json.sock");
+        await Task.Delay(1000);        // Reutilizar conexão para melhor performance
+        await using var client = new UnixUmbralSocketClient("/tmp/umbral_json.sock");
         
         await RunJsonTests(async (opcode, data) =>
         {
@@ -418,9 +577,8 @@ public static class Program
 
         var cts = new CancellationTokenSource();
         var serverTask = server.StartAsync(cts.Token);
-        await Task.Delay(1000);
-
-        var client = new NamedPipeUmbralSocketClient("UmbralJson");
+        await Task.Delay(1000);        // Reutilizar conexão para melhor performance
+        await using var client = new NamedPipeUmbralSocketClient("UmbralJson");
         
         await RunJsonTests(async (opcode, data) =>
         {
@@ -472,8 +630,7 @@ public static class Program
     }
 
     private static void ShowUsage()
-    {
-        Console.WriteLine("Uso: dotnet run [opção]");
+    {        Console.WriteLine("Uso: dotnet run [opção]");
         Console.WriteLine();
         Console.WriteLine("Opções:");
         Console.WriteLine("  unix        - Executar demo Unix Socket");
